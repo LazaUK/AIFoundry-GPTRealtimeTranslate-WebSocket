@@ -81,6 +81,25 @@ while True:
 ```
 
 ## Part 3: Frontend UI
+The **static/index.html** file manages UI state control via client-side *JavaScript* code. It handles microphone access using *getUserMedia* and uses a *ScriptProcessorNode* downsampler to format input audio into the *24kHz mono PCM* buffer layout required by the model.
 
+``` JavaScript
+mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+audioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 24000 });
+const source = audioContext.createMediaStreamSource(mediaStream);
+processor = audioContext.createScriptProcessor(4096, 1, 1);
+```
+
+The app instantiates a fresh, structured paragraph frame each time the user clicks *Start Translating*.
+
+``` JavaScript
+ws.onmessage = (event) => {
+    const data = JSON.parse(event.data);
+    if (data.text && currentParagraphBlock) {
+        currentParagraphBlock.appendChild(document.createTextNode(data.text));
+        transcriptDiv.scrollTop = transcriptDiv.scrollHeight;
+    }
+};
+```
 
 ## Part 4: Running the Demo
