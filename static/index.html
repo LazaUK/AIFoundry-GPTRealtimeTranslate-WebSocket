@@ -1,1 +1,146 @@
-test
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>GPT-realtime-translate Demo</title>
+    <style>
+        body { font-family: system-ui, sans-serif; max-width: 700px; margin: 40px auto; padding: 20px; background: #fafafa; }
+        
+        .controls-container { display: flex; align-items: center; gap: 15px; margin-bottom: 20px; flex-wrap: wrap; }
+        label { font-weight: 600; color: #444; }
+        select { padding: 10px 16px; font-size: 15px; border-radius: 6px; border: 1px solid #d1d5db; background: #fff; cursor: pointer; }
+        
+        #transcript { 
+            padding: 20px; 
+            background: #ffffff; 
+            border: 1px solid #e1e4e8;
+            border-radius: 12px; 
+            height: 350px; 
+            overflow-y: auto; 
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+        }
+        
+        .translation-paragraph {
+            margin-bottom: 18px;
+            line-height: 1.6;
+            color: #24292e;
+            font-size: 16px;
+            padding-bottom: 8px;
+            border-bottom: 1px dashed #f0f2f5;
+        }
+
+        .active-session { color: #0070f3; font-weight: 500; }
+
+        button { padding: 12px 24px; font-size: 16px; font-weight: 600; cursor: pointer; border-radius: 6px; border: none; color: white; transition: background 0.2s; }
+        #startBtn { background: #2ea44f; }
+        #startBtn:hover { background: #2c974b; }
+        #stopBtn { background: #d73a49; }
+        #stopBtn:hover { background: #cb2431; }
+        button:disabled, select:disabled { background: #fafbfc !important; color: #959da5; border: 1px solid #e1e4e8; cursor: not-allowed; }
+    </style>
+</head>
+<body>
+    <h2>GPT-Realtime-Translate Demo</h2>
+    <p>Select your target language, click Start Translating and speak into your mic.</p>
+    
+    <div class="controls-container">
+        <!-- The 13 explicitly supported target languages -->
+        <label for="langSelect">Translate Target:</label>
+        <select id="langSelect">
+            <option value="es" selected>Spanish (Español)</option>
+            <option value="en">English</option>
+            <option value="fr">French (Français)</option>
+            <option value="ja">Japanese (日本語)</option>
+            <option value="pt">Portuguese (Português)</option>
+            <option value="ru">Russian (Русский)</option>
+            <option value="zh">Chinese (中文)</option>
+            <option value="de">German (Deutsch)</option>
+            <option value="ko">Korean (한국어)</option>
+            <option value="hi">Hindi (हिन्दी)</option>
+            <option value="id">Indonesian (Bahasa Indonesia)</option>
+            <option value="vi">Vietnamese (Tiếng Việt)</option>
+            <option value="it">Italian (Italiano)</option>
+        </select>
+
+        <button id="startBtn">Start Translating</button>
+        <button id="stopBtn" disabled>Stop</button>
+    </div>
+
+    <div id="transcript"></div>
+
+    <script>
+        let ws;
+        let audioContext;
+        let processor;
+        let mediaStream;
+        let currentParagraphBlock = null;
+
+        const startBtn = document.getElementById('startBtn');
+        const stopBtn = document.getElementById('stopBtn');
+        const langSelect = document.getElementById('langSelect');
+        const transcriptDiv = document.getElementById('transcript');
+
+        startBtn.onclick = async () => {
+            startBtn.disabled = true;
+            stopBtn.disabled = false;
+            langSelect.disabled = true;
+
+            const selectedLanguage = langSelect.value;
+
+            currentParagraphBlock = document.createElement('p');
+            currentParagraphBlock.className = 'translation-paragraph active-session';
+            const badge = document.createElement('strong');
+            badge.innerText = `[${selectedLanguage.toUpperCase()}] `;
+            badge.style.color = '#586069';
+            currentParagraphBlock.appendChild(badge);
+            transcriptDiv.appendChild(currentParagraphBlock);
+
+            ws = new WebSocket(`ws://${window.location.host}/stream?lang=${selectedLanguage}`);
+
+            ws.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                if (data.text && currentParagraphBlock) {
+                    currentParagraphBlock.appendChild(document.createTextNode(data.text));
+                    transcriptDiv.scrollTop = transcriptDiv.scrollHeight;
+                }
+            };
+
+            mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            audioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 24000 });
+            const source = audioContext.createMediaStreamSource(mediaStream);
+            
+            processor = audioContext.createScriptProcessor(4096, 1, 1);
+            processor.onaudioprocess = (e) => {
+                const inputData = e.inputBuffer.getChannelData(0);
+                const l = inputData.length;
+                const buf = new Int16Array(l);
+                for (let i = 0; i < l; i++) {
+                    buf[i] = Math.min(1, Math.max(-1, inputData[i])) * 0x7FFF;
+                }
+                if (ws.readyState === WebSocket.OPEN) {
+                    const base64Audio = btoa(String.fromCharCode(...new Uint8Array(buf.buffer)));
+                    ws.send(base64Audio);
+                }
+            };
+
+            source.connect(processor);
+            processor.connect(audioContext.destination);
+        };
+
+        stopBtn.onclick = () => {
+            startBtn.disabled = false;
+            stopBtn.disabled = true;
+            langSelect.disabled = false;
+            
+            if (currentParagraphBlock) {
+                currentParagraphBlock.classList.remove('active-session');
+            }
+
+            if (processor) processor.disconnect();
+            if (audioContext) audioContext.close();
+            if (mediaStream) mediaStream.getTracks().forEach(track => track.stop());
+            if (ws) ws.close();
+        };
+    </script>
+</body>
+</html>
