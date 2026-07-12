@@ -2,11 +2,14 @@
 
 This repo demonstrates how to use the **gpt-realtime-translate** model in Microsoft Foundry with server-side *WebSocket* Python proxy and secure *Entra ID* authentication.
 
+> [!TIP]
+> Learn more about the GPT-Realtime-Translate on this [Microsoft Foundry documentation page]([https://learn.microsoft.com/en-us/azure/ai-services/openai/how-to/realtime-audio-webrtc](https://learn.microsoft.com/en-us/azure/foundry/openai/concepts/gpt-realtime-translate)).
+
 ## 📑 Table of Contents:
 - [Part 1: Configuring Solution Environment](#part-1-configuring-solution-environment)
-- [Part 2: Backend Implementation]()
-- [Part 3: Frontend UI]()
-- [Part 4: Running the Demo]()
+- [Part 2: Backend Implementation](#part-2-backend-implementation)
+- [Part 3: Frontend UI](#part-3-frontend-ui)
+- [Part 4: Running the Demo](#part-4-running-the-demo)
 
 ## Part 1: Configuring Solution Environment
 
@@ -41,3 +44,9 @@ pip install fastapi uvicorn websockets azure-identity
 ```
 
 ## Part 2: Backend Implementation
+
+
+## Part 3: Frontend UI
+
+
+## Part 4: Running the Demo
