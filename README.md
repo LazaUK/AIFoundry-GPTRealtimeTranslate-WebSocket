@@ -1,4 +1,4 @@
-# Azure AI Foundry: Web App for Realtime Speech Translation with WebSocket
+# Azure AI Foundry: Web App for Realtime Speech Translation via WebSocket
 
 This repo demonstrates how to use the **gpt-realtime-translate** model in Microsoft Foundry with server-side *WebSocket* Python proxy and secure *Entra ID* authentication.
 
@@ -44,7 +44,41 @@ pip install fastapi uvicorn websockets azure-identity
 ```
 
 ## Part 2: Backend Implementation
+The **app.py** acts as an asynchronous proxy between the client browser and the secure Microsoft Foundry endpoint. It dynamically retrieves *Entra ID tokens* via *get_bearer_token_provider* to authenticate the streaming session over raw WebSockets without exposing API keys.
 
+``` Python
+token_provider = get_bearer_token_provider(
+    DefaultAzureCredential(), 
+    "https://cognitiveservices.azure.com/.default"
+)
+```
+
+When a frontend connection opens, the backend checks the client's preferred language parameter and initialises the session state via a *session.update* frame.
+
+``` Python
+session_update = {
+    "type": "session.update",
+    "session": {
+        "audio": {
+            "output": {
+                "language": target_language 
+            }
+        }
+    }
+}
+```
+
+It then starts concurrent tasks to stream binary audio chunks up to Foundry, while sending text delta strings back down to the frontend UI.
+
+``` Python
+while True:
+    base64_audio = await websocket.receive_text()
+    audio_append = {
+        "type": "session.input_audio_buffer.append",
+        "audio": base64_audio
+    }
+    await azure_ws.send(json.dumps(audio_append))
+```
 
 ## Part 3: Frontend UI
 
