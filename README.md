@@ -1,4 +1,4 @@
-# Azure AI Foundry: Web App for Realtime Speech Transalation
+# Azure AI Foundry: Web App for Realtime Speech Translation with WebSocket
 
 This repo demonstrates how to use the **gpt-realtime-translate** model in Microsoft Foundry with server-side *WebSocket* Python proxy and secure *Entra ID* authentication.
 
