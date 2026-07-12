@@ -103,3 +103,5 @@ ws.onmessage = (event) => {
 ```
 
 ## Part 4: Running the Demo
+
+![GPT-realtime-translate Demo](images/gpt-realtime-translate-demo.png)
