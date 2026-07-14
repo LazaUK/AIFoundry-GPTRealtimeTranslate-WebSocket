@@ -36,7 +36,7 @@ Configure the following environment variables in your operating system:
 | FOUNDRY_RESOURCE_NAME   | The sub-domain name of your Foundry resource.             |
 | FOUNDRY_DEPLOYMENT_NAME | The exact name of your gpt-realtime-translate deployment. |
 
-1.4 Installation
+### 1.4 Installation
 Install the necessary Python packages:
 
 ``` Python
